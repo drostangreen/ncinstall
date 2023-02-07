@@ -1,18 +1,16 @@
 #!/bin/bash
-toilet -f smblock --gay "updating"
-sudo apt update -y
-notify-send "Linux Rulez" &&
-notify-send "Tristan Smellz"
-echo Would you like to install required packages? "(Y or N)"
-read x
-if [ "$x" = "y" ]; then
-    echo "Installing Base" &&
-    apt-get install apache2 libapache2-mod-php mariadb-server php-xml php-cli php-cgi php-mysql php-mbstring php-gd php-curl php-zip wget unzip -y
-fi
+
+version=8.1
+
+echo "Updating repos"; sudo apt update > /dev/null
+echo "Installing Prereqs for PHP"; sudo apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null
+echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/sury-php.list
+echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg| sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg
+echo "Installing Base"; sudo apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null
 
 #configure php ini file, check version
 #add to file
-##nano /etc/php/7.3/apache2/php.ini
+##nano /etc/php/$version/apache2/php.ini
 ###memory_limit = 512M
 ###upload_max_filesize = 500M
 ###post_max_size = 500M
