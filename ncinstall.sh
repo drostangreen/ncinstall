@@ -9,7 +9,7 @@ echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release 
 echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg| sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg
 echo "Installing Base"; sudo apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null
 
-#configure php ini file, check version
+# configure php ini file, check version
 
 cp /etc/php/$version/apache2/php.ini /etc/php/$version/apache2/php.ini.bak
 sudo sed -i 's/^memory_limit = .*/memory_limit = 512M/' /etc/php/$version/apache2/php.ini
@@ -22,14 +22,11 @@ echo "Enabling Services"
 sudo systemctl enable --now apache2
 sudo systemctl enable --now mariadb
 
-#setup a database, provide root password when asked
-##mysql -u root -p
-##MariaDB [(none)]> CREATE DATABASE nextclouddb;
-##MariaDB [(none)]> CREATE USER 'username'@'localhost' IDENTIFIED BY 'password';
-#grant privileges to the database, flush and exit mariadb
-##MariaDB [(none)]> GRANT ALL ON nextclouddb.* TO 'username'@'localhost';
-##MariaDB [(none)]> FLUSH PRIVILEGES;
-##MariaDB [(none)]> EXIT;
+# Create a database with a user, grant privileges
+sudo mysql -e "CREATE DATABASE nextclouddb;"
+sudo mysql -e "CREATE USER 'ncadmin'@'localhost' IDENTIFIED BY 'password';"
+sudo mysql -e "GRANT ALL ON nextclouddb.* TO 'ncadmin'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
 
 #download nc
 echo Would you like to install Next Cloud? "(Y or N)"
