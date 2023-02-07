@@ -2,6 +2,7 @@
 
 version=8.1
 timezone=America/Chicago
+APACHE_LOG_DIR=/var/log/apache2
 
 echo "Updating repos"; sudo apt update > /dev/null
 echo "Installing Prereqs for PHP"; sudo apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null
@@ -36,38 +37,34 @@ sudo chown -R www-data:www-data /var/www/html/nextcloud/
 sudo chmod -R 755 /var/www/html/nextcloud/
 
 #configure apache, add lines
-##nano /etc/apache2/sites-available/nextcloud.conf
-###<VirtualHost *:80>
-###     ServerAdmin admin@example.com
-###     DocumentRoot /var/www/html/nextcloud/
-###     ServerName nextcloud.example.com
-###
-###     Alias /nextcloud "/var/www/html/nextcloud/"
-###
-###     <Directory /var/www/html/nextcloud/>
-###        Options +FollowSymlinks
-###        AllowOverride All
-###        Require all granted
-###          <IfModule mod_dav.c>
-###            Dav off
-###          </IfModule>
-###        SetEnv HOME /var/www/html/nextcloud
-###        SetEnv HTTP_HOME /var/www/html/nextcloud
-###     </Directory>
-###
-###     ErrorLog ${APACHE_LOG_DIR}/error.log
-###     CustomLog ${APACHE_LOG_DIR}/access.log combined
-###
-###</VirtualHost>
+sudo bash -c 'cat << EOF > /etc/apache2/sites-available/nextcloud.conf
+<VirtualHost *:80>
+    DocumentRoot /var/www/html/nextcloud/
+    ServerName nextcloud.example.com
+
+    Alias /nextcloud "/var/www/html/nextcloud/"
+
+    <Directory /var/www/html/nextcloud/>
+       Options +FollowSymlinks
+       AllowOverride All
+       Require all granted
+         <IfModule mod_dav.c>
+           Dav off
+         </IfModule>
+       SetEnv HOME /var/www/html/nextcloud
+       SetEnv HTTP_HOME /var/www/html/nextcloud
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+</VirtualHost>
+EOF'
 
 #enable apache virtual host
-##a2ensite nextcloud.conf
-##a2enmod rewrite
-##a2enmod headers
-##a2enmod env
-##a2enmod dir
-##a2enmod mime
-##systemctl restart apache2
+sudo a2ensite nextcloud.conf
+sudo a2enmod rewrite headers env dir mime
+sudo systemctl restart apache2
 
 #SSL
 ##apt-get install python-certbot-apache -y
