@@ -11,17 +11,16 @@ echo "Installing Base"; sudo apt install -y apache2 libapache2-mod-php$version m
 
 #configure php ini file, check version
 
+cp /etc/php/$version/apache2/php.ini /etc/php/$version/apache2/php.ini.bak
 sudo sed -i 's/^memory_limit = .*/memory_limit = 512M/' /etc/php/$version/apache2/php.ini
 sudo sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 500M/' /etc/php/$version/apache2/php.ini
 sudo sed -i 's/^post_max_size = .*/post_max_size = 500M/' /etc/php/$version/apache2/php.ini
 sudo sed -i 's/^max_execution_time = .*/max_execution_time = 300/' /etc/php/$version/apache2/php.ini
 sudo sed -i "s|\;date.timezone =|date.timezone = $timezone|g" /etc/php/$version/apache2/php.ini
 
-toilet -f smblock --gay "enabling services"
-systemctl start apache2
-systemctl start mariadb
-systemctl enable apache2
-systemctl enable mariadb
+echo "Enabling Services"
+sudo systemctl enable --now apache2
+sudo systemctl enable --now mariadb
 
 #setup a database, provide root password when asked
 ##mysql -u root -p
