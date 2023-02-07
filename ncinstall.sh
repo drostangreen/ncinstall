@@ -1,6 +1,7 @@
 #!/bin/bash
 
 version=8.1
+timezone=America/Chicago
 
 echo "Updating repos"; sudo apt update > /dev/null
 echo "Installing Prereqs for PHP"; sudo apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null
@@ -9,13 +10,12 @@ echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/a
 echo "Installing Base"; sudo apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null
 
 #configure php ini file, check version
-#add to file
-##nano /etc/php/$version/apache2/php.ini
-###memory_limit = 512M
-###upload_max_filesize = 500M
-###post_max_size = 500M
-###max_execution_time = 300
-###date.timezone = America/Chicago
+
+sudo sed -i 's/^memory_limit = .*/memory_limit = 512M/' /etc/php/$version/apache2/php.ini
+sudo sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 500M/' /etc/php/$version/apache2/php.ini
+sudo sed -i 's/^post_max_size = .*/post_max_size = 500M/' /etc/php/$version/apache2/php.ini
+sudo sed -i 's/^max_execution_time = .*/max_execution_time = 300/' /etc/php/$version/apache2/php.ini
+sudo sed -i "s|\;date.timezone =|date.timezone = $timezone|g" /etc/php/$version/apache2/php.ini
 
 toilet -f smblock --gay "enabling services"
 systemctl start apache2
