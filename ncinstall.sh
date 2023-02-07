@@ -28,18 +28,12 @@ sudo mysql -e "CREATE USER 'ncadmin'@'localhost' IDENTIFIED BY 'password';"
 sudo mysql -e "GRANT ALL ON nextclouddb.* TO 'ncadmin'@'localhost';"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
-#download nc
-echo Would you like to install Next Cloud? "(Y or N)"
-read x
-if [ "$x" = "y" ]; then
-    echo "Installing Base" &&
-    toilet -f smblock --gay "downloading nextcloud"
-    wget https://download.nextcloud.com/server/releases/nextcloud-20.0.1.zip
-    unzip nextcloud-20.0.1.zip
-    mv nextcloud /var/www/html/
-    chown -R www-data:www-data /var/www/html/nextcloud/
-    chmod -R 755 /var/www/html/nextcloud/
-fi
+# Download, Extract and place nextcloud
+echo "Installing Nextcloud"; wget -q https://download.nextcloud.com/server/releases/latest.zip
+echo "Unzipping"; unzip latest.zip > /dev/null && rm latest.zip
+sudo mv nextcloud /var/www/html/
+sudo chown -R www-data:www-data /var/www/html/nextcloud/
+sudo chmod -R 755 /var/www/html/nextcloud/
 
 #configure apache, add lines
 ##nano /etc/apache2/sites-available/nextcloud.conf
