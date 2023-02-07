@@ -9,12 +9,12 @@ if [ "$EUID" -ne 0 ]
   exit 1
 fi
 
-echo "Updating repos"; apt update > /dev/null
-echo "Installing Prereqs for PHP"; apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null
-echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |  tee /etc/apt/sources.list.d/sury-php.list
-echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg
-echo "Updating repos"; apt update > /dev/null
-echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null
+echo "Updating repos"; apt update > /dev/null 2>&1
+echo "Installing Prereqs for PHP"; apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null 2>&1
+echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
+echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
+echo "Updating repos"; apt update > /dev/null 2>&1
+echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null 2>&1
 
 # configure php ini file, check version
 
@@ -26,8 +26,8 @@ sed -i 's/^max_execution_time = .*/max_execution_time = 300/' /etc/php/$version/
 sed -i "s|\;date.timezone =|date.timezone = $timezone|g" /etc/php/$version/apache2/php.ini
 
 echo "Enabling Services"
-systemctl enable --now apache2
-systemctl enable --now mariadb
+systemctl enable --now apache2 > /dev/null 2>&1
+systemctl enable --now mariadb > /dev/null 2>&1
 
 # Create a database with a user, grant privileges
 mysql -e "CREATE DATABASE nextclouddb;"
@@ -68,10 +68,11 @@ cat << EOF > /etc/apache2/sites-available/nextcloud.conf
 EOF
 
 #enable apache virtual host
-a2dissite 000-default.conf
-a2ensite nextcloud.conf
-a2enmod rewrite headers env dir mime
-systemctl restart apache2
+echo "Disable default site"; a2dissite 000-default.conf > /dev/null
+echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
+a2enmod rewrite headers env dir mime > /dev/null
+systemctl restart apache2 > /dev/null
+
 
 #SSL
 ##apt-get install python-certbot-apache -y
