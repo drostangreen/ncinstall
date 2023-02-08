@@ -14,6 +14,13 @@ db_name=nextclouddb
 db_user=ncadmin
 db_pass=password
 
+set -e
+
+Error(){
+    echo "Error at line $1"
+}
+trap 'Error $LINENO' ERR
+
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit 1
