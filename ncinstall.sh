@@ -24,7 +24,7 @@ echo "Installing Prereqs for PHP"; apt install -y lsb-release ca-certificates ap
 echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
 echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
 echo "Updating repos"; apt update > /dev/null 2>&1
-echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null 2>&1
+echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip php$version-imagick libmagickcore-6.q16-6-extra php$version-gmp php$version-intl php$version-bcmath php$version-apcu wget unzip > /dev/null 2>&1
 
 # configure php ini file, set memory_limit, upload_max_filesize, post_max_size, max_execution_time and date.timezone
 
@@ -74,6 +74,9 @@ EOF
 echo "Disable default site"; a2dissite 000-default.conf > /dev/null
 echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
 a2enmod rewrite headers env dir mime > /dev/null
+phpenmod bcmath gmp imagick intl > /dev/null
 systemctl restart apache2 > /dev/null
 
 echo "Finish installing nexctloud at $servername or $(hostname -I)"
+echo "Database name is $db_name on localhost"
+echo "Database username is $db_user password is $db_pass"
