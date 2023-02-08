@@ -16,18 +16,12 @@ echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/a
 echo "Updating repos"; apt update > /dev/null 2>&1
 echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip wget unzip > /dev/null 2>&1
 
-# configure php ini file, check version
+# configure php ini file, set memory_limit, upload_max_filesize, post_max_size, max_execution_time and date.timezone
 
-cp /etc/php/$version/apache2/php.ini /etc/php/$version/apache2/php.ini.bak
-sed -i 's/^memory_limit = .*/memory_limit = 512M/' /etc/php/$version/apache2/php.ini
-sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 500M/' /etc/php/$version/apache2/php.ini
-sed -i 's/^post_max_size = .*/post_max_size = 500M/' /etc/php/$version/apache2/php.ini
-sed -i 's/^max_execution_time = .*/max_execution_time = 300/' /etc/php/$version/apache2/php.ini
-sed -i "s|\;date.timezone =|date.timezone = $timezone|g" /etc/php/$version/apache2/php.ini
+echo "Backup php.ini file then modify"; sed -i.bak "s|^memory_limit = .*|memory_limit = 512M|;s|^upload_max_filesize = .*|upload_max_filesize = 500M|;s|^post_max_size = .*|post_max_size = 500M|;s|^max_execution_time = .*|max_execution_time = 300|;s|\;date.timezone =|date.timezone = $timezone|" /etc/php/$version/apache2/php.ini
 
 echo "Enabling Services"
-systemctl enable --now apache2 > /dev/null 2>&1
-systemctl enable --now mariadb > /dev/null 2>&1
+systemctl enable --now apache2 mariadb > /dev/null 2>&1
 
 # Create a database with a user, grant privileges
 mysql -e "CREATE DATABASE nextclouddb;"
@@ -73,7 +67,4 @@ echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
 a2enmod rewrite headers env dir mime > /dev/null
 systemctl restart apache2 > /dev/null
 
-
-#SSL
-##apt-get install python-certbot-apache -y
-##certbot --apache -d domain.whatever
+echo "Finish installing nexctloud at $servername or $(hostname -I)"
