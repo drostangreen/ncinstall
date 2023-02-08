@@ -1,8 +1,18 @@
 #!/bin/bash
 
+# PHP Version
 version=8.1
+
+# Apache Vars
 timezone=America/Chicago
 APACHE_LOG_DIR=/var/log/apache2
+servername=nexctloud.example.com
+root_dir=/var/www/html/nextcloud
+
+# MariaDB/MySQL Vars
+db_name=nextclouddb
+db_user=ncadmin
+db_pass=password
 
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -24,35 +34,34 @@ echo "Enabling Services"
 systemctl enable --now apache2 mariadb > /dev/null 2>&1
 
 # Create a database with a user, grant privileges
-mysql -e "CREATE DATABASE nextclouddb;"
-mysql -e "CREATE USER 'ncadmin'@'localhost' IDENTIFIED BY 'password';"
-mysql -e "GRANT ALL ON nextclouddb.* TO 'ncadmin'@'localhost';"
+mysql -e "CREATE DATABASE ${db_name};"
+mysql -e "CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';"
+mysql -e "GRANT ALL ON ${db_name}.* TO '${db_user}'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
 # Download, Extract and place nextcloud
 echo "Installing Nextcloud"; wget -q https://download.nextcloud.com/server/releases/latest.zip
 echo "Unzipping"; unzip latest.zip > /dev/null && rm latest.zip
-mv nextcloud /var/www/html/
-chown -R www-data:www-data /var/www/html/nextcloud/
-chmod -R 755 /var/www/html/nextcloud/
+mv nextcloud $root_dir
+chown -R www-data:www-data $root_dir
+chmod -R 755 $root_dir
 
 #configure apache, add lines
 cat << EOF > /etc/apache2/sites-available/nextcloud.conf
 <VirtualHost *:80>
-    DocumentRoot /var/www/html/nextcloud/
-    ServerName nextcloud.example.com
+    DocumentRoot $root_dir
+    ServerName $servername
+    Alias /nextcloud "$root_dir"
 
-    Alias /nextcloud "/var/www/html/nextcloud/"
-
-    <Directory /var/www/html/nextcloud/>
+    <Directory $root_dir>
        Options +FollowSymlinks
        AllowOverride All
        Require all granted
          <IfModule mod_dav.c>
            Dav off
          </IfModule>
-       SetEnv HOME /var/www/html/nextcloud
-       SetEnv HTTP_HOME /var/www/html/nextcloud
+       SetEnv HOME $root_dir
+       SetEnv HTTP_HOME $root_dir
     </Directory>
 
     ErrorLog ${APACHE_LOG_DIR}/error.log
