@@ -113,9 +113,13 @@ EOF
 echo "Finish installing nexctloud at $servername"
 echo "Username: $nc_user"
 echo "Password: $nc_pass"
-pause "Press [ENTER] after Autoconfig has run to fix Default Phone Region Error"
+pause "Press [ENTER] to continue..."
 
-# Add Memcache and fix the phone region error
+read -p "Setup Memcache and fix Default Phone Region Error (Y/n)"
+if [[ $REPLY =~ ^[Nn]$ ]]; then
+    echo "!!! Canceled by user."
+    exit 1
+fi
 
 sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'""," $root_dir/config/config.php
 sed -i 's/\\/\\\\/g' $root_dir/config/config.php
