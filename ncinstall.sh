@@ -33,9 +33,10 @@ echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/a
 echo "Updating repos"; apt update > /dev/null 2>&1
 echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip php$version-imagick libmagickcore-6.q16-6-extra php$version-gmp php$version-intl php$version-bcmath php$version-apcu wget unzip > /dev/null 2>&1
 
-# configure php ini file, set memory_limit, upload_max_filesize, post_max_size, max_execution_time and date.timezone
+# configure php ini file, set normal params then setup for memcache
 
 echo "Backup php.ini file then modify"; sed -i.bak "s|^memory_limit = .*|memory_limit = 512M|;s|^upload_max_filesize = .*|upload_max_filesize = 500M|;s|^post_max_size = .*|post_max_size = 500M|;s|^max_execution_time = .*|max_execution_time = 300|;s|\;date.timezone =|date.timezone = $timezone|" /etc/php/$version/apache2/php.ini
+sed -i "s/^;opcache\.enable=.*/opcache\.enable=1/;s/^;opcache\.interned_strings_bugger=.*/opcache\.interned_strings_buffer=8/;s/^;opcache\.max_accelerated_files=.*/opcache\.max_accelerated_files=10000/;s/^;opcache\.memory_consumption=.*/opcache.memory_consumption=128/;s/^;opcache\.save_comments=.*/opcache.save_comments=1/;s/^;opcache\.revalidate_freq=.*/opcache.revalidate_freq=1/" /etc/php/$version/apache2/php.ini
 
 echo "Enabling Services"
 systemctl enable --now apache2 mariadb > /dev/null 2>&1
