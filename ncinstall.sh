@@ -11,8 +11,12 @@ root_dir=/var/www/html/nextcloud
 
 # MariaDB/MySQL Vars
 db_name=nextclouddb
-db_user=ncadmin
+db_user=dbadmin
 db_pass=password
+
+# Nextcloud
+nc_user=ncadmin
+nc_pass=password
 
 set -e
 
@@ -20,6 +24,10 @@ Error(){
     echo "Error at line $1"
 }
 trap 'Error $LINENO' ERR
+
+function pause(){
+   read -p "$*"
+}
 
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -85,6 +93,29 @@ a2enmod rewrite headers env dir mime > /dev/null
 phpenmod bcmath gmp imagick intl > /dev/null
 systemctl restart apache2 > /dev/null
 
-echo "Finish installing nexctloud at $servername or $(hostname -I)"
-echo "Database name is $db_name on localhost"
-echo "Database username is $db_user password is $db_pass"
+# Autoconfig for Nextcloud
+
+cat << EOF > $root_dir/config/autoconfig.php
+<?php
+\$AUTOCONFIG = array(
+  "dbtype"        => "mysql",
+  "dbname"        => "$db_name",
+  "dbuser"        => "$db_user",
+  "dbpass"        => "$db_pass",
+  "dbhost"        => "localhost",
+  "dbtableprefix" => "",
+  "adminlogin"    => "$nc_user",
+  "adminpass"     => "$nc_pass",
+  "directory"     => "$root_dir/data",
+);
+EOF
+
+echo "Finish installing nexctloud at $servername"
+echo "Username: $nc_user"
+echo "Password: $nc_pass"
+pause "Press [ENTER] after Autoconfig has run to fix Default Phone Region Error"
+
+# Add Memcache and fix the phone region error
+
+sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'""," $root_dir/config/config.php
+sed -i 's/\\/\\\\/g' $root_dir/config/config.php
