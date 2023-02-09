@@ -29,6 +29,15 @@ function pause(){
    read -p "$*"
 }
 
+deb_repo(){
+  echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
+  echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
+}
+
+focal_repo(){
+  echo "adding ondrej/php repo"; add-apt-repository -y ppa:ondrej/php > /dev/null 2>&1
+}
+
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit 1
@@ -36,8 +45,17 @@ fi
 
 echo "Updating repos"; apt update > /dev/null 2>&1
 echo "Installing Prereqs for PHP"; apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null 2>&1
-echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
-echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
+
+if [[ $(lsb_release -is) == "Debian" ]];
+then
+  deb_repo
+elif [[ $(lsb_release -is) == "Ubuntu" ]] && [[ $(lsb_release -sr | cut -d. -f1) -lt 22 ]];
+then
+  focal_repo
+else
+   echo Ubuntu 22.04 does not need repo
+fi
+
 echo "Updating repos"; apt update > /dev/null 2>&1
 echo "Installing Base"; apt install -y apache2 libapache2-mod-php$version mariadb-server php$version-xml php$version-cli php$version-cgi php$version-mysql php$version-mbstring php$version-gd php$version-curl php$version-zip php$version-imagick libmagickcore-6.q16-6-extra php$version-gmp php$version-intl php$version-bcmath php$version-apcu wget unzip > /dev/null 2>&1
 
