@@ -115,11 +115,15 @@ echo "Username: $nc_user"
 echo "Password: $nc_pass"
 pause "Press [ENTER] to continue..."
 
+# Default Yes to question
+
 read -p "Setup Memcache and fix Default Phone Region Error (Y/n)"
 if [[ $REPLY =~ ^[Nn]$ ]]; then
-    echo "!!! Canceled by user."
-    exit 1
+    echo "Enjoy your new Nextcloud at http://$servername!"
+    exit
 fi
 
 sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'""," $root_dir/config/config.php
 sed -i 's/\\/\\\\/g' $root_dir/config/config.php
+
+echo "Enjoy your new Nextcloud at http://$servername!"
