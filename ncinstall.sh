@@ -5,9 +5,11 @@ version=8.1
 
 # Apache Vars
 timezone=America/Chicago
-APACHE_LOG_DIR=/var/log/apache2
+webserver_log_dir=/var/log/apache2
 servername=nexctloud.example.com
 root_dir=/var/www/html/nextcloud
+key_path=/etc/ssl/private
+cert_path=/etc/ssl/certs
 
 # MariaDB/MySQL Vars
 db_name=nextclouddb
@@ -80,34 +82,47 @@ mv nextcloud $root_dir
 chown -R www-data:www-data $root_dir
 chmod -R 755 $root_dir
 
-#configure apache, add lines
+# Generate Self Signed Certs, Uncomment to create a Diffie Helman
+openssl req -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername"
+
 cat << EOF > /etc/apache2/sites-available/nextcloud.conf
 <VirtualHost *:80>
     DocumentRoot $root_dir
     ServerName $servername
-    Alias /nextcloud "$root_dir"
+
+    Redirect permanent / https://$servername
+
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName $servername
+    DocumentRoot $root_dir
+
+
+    SSLEngine on
+    SSLCertificateFile $cert_path/nextcloudcrt.pem
+    SSLCertificateKeyFile $key_path/nextcloud.key
 
     <Directory $root_dir>
-       Options +FollowSymlinks
-       AllowOverride All
-       Require all granted
-         <IfModule mod_dav.c>
-           Dav off
-         </IfModule>
-       SetEnv HOME $root_dir
-       SetEnv HTTP_HOME $root_dir
+        Options +FollowSymlinks
+        AllowOverride All
+        Require all granted
+            <IfModule mod_dav.c>
+            Dav off
+            </IfModule>
+        SetEnv HOME $root_dir
+        SetEnv HTTP_HOME $root_dir
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/error.log
-    CustomLog ${APACHE_LOG_DIR}/access.log combined
-
+    ErrorLog ${webserver_log_dir}/error.log
+    CustomLog ${webserver_log_dir}/access.log combined
 </VirtualHost>
 EOF
 
 #enable apache virtual host
 echo "Disable default site"; a2dissite 000-default.conf > /dev/null
-echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
-a2enmod rewrite headers env dir mime > /dev/null
+echo "Enable nextcloud.conf"; a2ensite nextcloud.conf nextcloud-ssl.conf > /dev/null
+a2enmod rewrite headers env dir mime ssl > /dev/null
 phpenmod bcmath gmp imagick intl > /dev/null
 systemctl restart apache2 > /dev/null
 
