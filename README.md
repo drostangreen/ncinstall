@@ -6,8 +6,8 @@ Allows for Cameron (and anyone that wants to) to install the latest nextcloud in
 
 ## How to use
 Clone the script then change directory into repo
-Change the webserver to either apache or nginx to suit your preference
-Run either as root directly or as sudo
+Adjust any settings that you see fit (Passwords should be changed to something secure)
+Run either -h or --help to see other options
 Profit
 
 ### Works on
