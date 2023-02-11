@@ -6,11 +6,12 @@ version=8.1
 # Webserver Vars
 webserver=nginx
 timezone=America/Chicago
-webserver_log_dir=/var/log/$webserver
+webserver_log_dir=/var/log/nginx
 servername=nexctloud.example.com
 root_dir=/var/www/html/nextcloud
 key_path=/etc/ssl/private
 cert_path=/etc/ssl/certs
+ssl_days=3650
 
 # MariaDB/MySQL Vars
 db_name=nextclouddb
@@ -22,6 +23,26 @@ nc_user=ncadmin
 nc_pass=password
 
 set -e
+
+Help(){
+    echo "Setups up Nextcloud"
+    echo
+    echo "Default options: Installs with nginx and ssl validity days of 3650"
+    echo "options:"
+    echo "-a    sets apache2 as the web server"
+    echo "-n    sets nginx as the web server"
+    echo "-d    create Diffie-Hellman Parameter key *WARNING* this can take a long time"
+    echo "-s    set the days for ssl validity"
+    echo "-h    show help"
+    echo
+    echo '######################################################'
+    echo "long options:"
+    echo "--apache | --apache2  sets apache2 as the web server"
+    echo "--nginx               sets nginx as the web server"
+    echo "--dhparam-file        create Diffie-Hellman Parameter key"
+    echo "--ssl-valid-days      set the days for ssl validity"
+    echo "--help                show help"
+}
 
 Error(){
     echo "Error at line $1"
@@ -220,10 +241,43 @@ phpenmod bcmath gmp imagick intl > /dev/null
 systemctl restart apache2 > /dev/null
 }
 
+while [ "$1" != "" ]; do
+    case $1 in
+    -a | --apache | --apache2)
+        webserver=apache2
+        webserver_log_dir=/var/log/apache2
+        ;;
+    -n | --nginx)
+        webserver=nginx
+        ;;
+
+    -d | --dhparam-file)
+        dhparam=true
+        ;;
+
+    -h | --help)
+        Help # run Help function
+        exit 0
+        ;;
+
+    -s | --ssl-valid-days)
+        shift
+        ssl_days=$1
+        ;;
+    
+    *)
+        echo Invalid option
+        Help
+        exit 1
+        ;;
+    esac
+    shift # remove the current value for `$1` and use the next
+done
+
 ################## Begining of Script ##################
 
 if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
+  then echo "Please run as root"; Help
   exit 1
 fi
 
@@ -261,8 +315,12 @@ chown -R www-data:www-data $root_dir
 chmod -R 755 $root_dir
 
 # Generate Self Signed Certs, Uncomment to create a Diffie Helman
-openssl req -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername"
-# openssl dhparam -out $cert_path/dhparam.pem 4096
+openssl req -newkey rsa:4096 -x509 -sha256 -days $ssl_days -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername"
+if [[ $dhparam == true ]]; then
+    openssl dhparam -out $cert_path/dhparam.pem 4096
+else
+    true
+fi
 
 $webserver\_setup
 
