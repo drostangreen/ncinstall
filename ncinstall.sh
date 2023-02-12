@@ -182,6 +182,7 @@ fi
 
 php_config
 sed -i.bak '/env\[/s/^;//g' /etc/php/$version/fpm/pool.d/www.conf
+sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' /etc/php/$version/fpm/pool.d/www.conf
 
 #enable nginx virtual host
 systemctl enable --now php$version-fpm > /dev/null
