@@ -66,6 +66,10 @@ redhat_repo(){
     echo "Add Remis repo for PHP"; dnf install -y https://rpms.remirepo.net/enterprise/remi-release-$(lsb_release -sr | cut -d. -f1).rpm > /dev/null 2>&1
 }
 
+fedora_repo(){
+    echo "Add Remis repo for PHP"; dnf -y install http://rpms.remirepo.net/fedora/remi-release-$VERSION_ID.rpm > /dev/null 2>&1
+}
+
 selinux_config(){
     semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/config(/.*)?"
     semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/apps(/.*)?"
@@ -317,7 +321,7 @@ echo "Installing Prereqs for PHP"; dnf install -y redhat-lsb-core epel-release y
 if [[ $ID == "rocky" ]] || [[ $ID == "centos" ]] || [[ $ID == "rhel" ]] || [[ $ID == "almalinux" ]]; then
   redhat_repo
 elif [[ $ID == "fedora" ]]; then
-    echo "Not yet supported"
+    fedora_repo
     exit
 fi
 
