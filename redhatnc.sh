@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /etc/os-release
+
 # PHP Version
 version=8.1
 
@@ -58,6 +60,23 @@ php_config(){
 
     echo "Backup php.ini file then modify"; sed -i.bak "s|^memory_limit = .*|memory_limit = 512M|;s|^upload_max_filesize = .*|upload_max_filesize = 500M|;s|^post_max_size = .*|post_max_size = 500M|;s|^max_execution_time = .*|max_execution_time = 300|;s|\;date.timezone =|date.timezone = $timezone|" /etc/php.ini
     sed -i "s/^;opcache\.enable=.*/opcache\.enable=1/;s/^;opcache\.interned_strings_bugger=.*/opcache\.interned_strings_buffer=8/;s/^;opcache\.max_accelerated_files=.*/opcache\.max_accelerated_files=10000/;s/^;opcache\.memory_consumption=.*/opcache.memory_consumption=128/;s/^;opcache\.save_comments=.*/opcache.save_comments=1/;s/^;opcache\.revalidate_freq=.*/opcache.revalidate_freq=1/" /etc/php.d/10-opcache.ini
+}
+
+redhat_repo(){
+    echo "Add Remis repo for PHP"; dnf install -y https://rpms.remirepo.net/enterprise/remi-release-$(lsb_release -sr | cut -d. -f1).rpm > /dev/null 2>&1
+}
+
+selinux_config(){
+    semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/config(/.*)?"
+    semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/apps(/.*)?"
+    semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/.htaccess"
+    semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/.user.ini"
+    semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/3rdparty/aws/aws-sdk-php/src/data/logs(/.*)?"
+
+    restorecon -R "$root_dir"
+
+    setsebool -P httpd_can_network_connect on
+    setsebool -P httpd_execmem 1
 }
 
 nextcloud_install(){
@@ -188,6 +207,11 @@ sed -i.bak '/env\[/s/^;//g' $php_path/www.conf
 sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' $php_path/www.conf
 sed -i "s/user =.*/user = $web_user/;s/group =.*/group = $web_user/" $php_path/www.conf
 
+chgrp -R nginx /var/lib/php/{opcache,session,wsdlcache}
+
+semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/data(/.*)?"
+selinux_config
+
 chcon -t httpd_sys_rw_content_t $root_dir -R
 setfacl -R -m u:nginx:rwx /var/lib/php/opcache/
 setfacl -R -m u:nginx:rwx /var/lib/php/session/
@@ -244,7 +268,8 @@ cat << EOF > /etc/httpd/conf.d/nextcloud.conf
 EOF
 
 php_config
-systemctl restart httpd > /dev/null
+selinux_config
+systemctl restart httpd php-fpm > /dev/null
 }
 
 while [ "$1" != "" ]; do
@@ -287,23 +312,15 @@ if [ "$EUID" -ne 0 ]
   exit 1
 fi
 
-# disable SELINUX
-setenforce 0
-sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config
-
 echo "Installing Prereqs for PHP"; dnf install -y redhat-lsb-core epel-release yum-utils unzip curl wget bash-completion policycoreutils-python-utils mlocate bzip2 > /dev/null 2>&1
 
-# if [[ $(lsb_release -is) == "Debian" ]];
-# then
-#   deb_repo
-# elif [[ $(lsb_release -is) == "Ubuntu" ]] && [[ $(lsb_release -sr | cut -d. -f1) -lt 22 ]];
-# then
-#   focal_repo
-# else
-#    echo Ubuntu 22.04 does not need repo
-# fi
+if [[ $ID == "rocky" ]] || [[ $ID == "centos" ]] || [[ $ID == "rhel" ]] || [[ $ID == "almalinux" ]]; then
+  redhat_repo
+elif [[ $ID == "fedora" ]]; then
+    echo "Not yet supported"
+    exit
+fi
 
-echo "Add Remis repo for PHP"; dnf install -y https://rpms.remirepo.net/enterprise/remi-release-$(lsb_release -sr | cut -d. -f1).rpm > /dev/null 2>&1
 echo "Setting PHP to version $version"; dnf module enable php:remi-$version -y > /dev/null 2>&1
 echo "Installing Base"; dnf install -y $webserver mariadb-server wget unzip php php-{bcmath,bz2,intl,gd,mbstring,mysql,zip,xml,curl,cli,mbstring,imagick,gmp,apcu,posix}  > /dev/null 2>&1
 
@@ -326,18 +343,6 @@ else
 fi
 
 $webserver\_setup
-
-# semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/data(/.*)?"
-semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/config(/.*)?"
-semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/apps(/.*)?"
-semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/.htaccess"
-semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/.user.ini"
-semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/3rdparty/aws/aws-sdk-php/src/data/logs(/.*)?"
-
-restorecon -R "$root_dir"
-
-setsebool -P httpd_can_network_connect on
-setsebool -P httpd_execmem 1
 
 # Autoconfig for Nextcloud
 
