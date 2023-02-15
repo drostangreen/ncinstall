@@ -322,7 +322,6 @@ if [[ $ID == "rocky" ]] || [[ $ID == "centos" ]] || [[ $ID == "rhel" ]] || [[ $I
   redhat_repo
 elif [[ $ID == "fedora" ]]; then
     fedora_repo
-    exit
 fi
 
 echo "Setting PHP to version $version"; dnf module enable php:remi-$version -y > /dev/null 2>&1
