@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /etc/os-release
+
 # PHP Version
 version=8.1
 
@@ -54,7 +56,7 @@ function pause(){
 }
 
 deb_repo(){
-    echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
+    echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $VERSION_CODENAME main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
     echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
 }
 
@@ -283,12 +285,12 @@ if [ "$EUID" -ne 0 ]
 fi
 
 echo "Updating repos"; apt update > /dev/null 2>&1
-echo "Installing Prereqs for PHP"; apt install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null 2>&1
+echo "Installing Prereqs for PHP"; apt install -y ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null 2>&1
 
-if [[ $(lsb_release -is) == "Debian" ]];
+if [[ $ID == "debian" ]];
 then
   deb_repo
-elif [[ $(lsb_release -is) == "Ubuntu" ]] && [[ $(lsb_release -sr | cut -d. -f1) -lt 22 ]];
+elif [[ $ID == "ubuntu" ]] && [[ "${VERSION_ID%%.*}" -lt 22 ]];
 then
   focal_repo
 else
