@@ -70,6 +70,66 @@ fedora_repo(){
     echo "Add Remis repo for PHP"; dnf -y install http://rpms.remirepo.net/fedora/remi-release-$VERSION_ID.rpm > /dev/null 2>&1
 }
 
+mysql_setup(){
+mysql -sfu root <<EOS
+-- set root password
+UPDATE mysql.user SET Password=PASSWORD('$db_root_pass') WHERE User='root';
+-- delete anonymous users
+DELETE FROM mysql.user WHERE User='';
+-- delete remote root capabilities
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+-- drop database 'test'
+DROP DATABASE IF EXISTS test;
+-- also make sure there are lingering permissions to it
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+-- make changes immediately
+FLUSH PRIVILEGES;
+EOS
+
+
+# Create a database with a user, grant privileges
+mysql --user=root --password=password <<EOF
+CREATE DATABASE ${db_name};
+CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';
+GRANT ALL ON ${db_name}.* TO '${db_user}'@'localhost';
+FLUSH PRIVILEGES;
+EOF
+}
+
+ssl_create(){
+    # Generate Self Signed Certs, Uncomment to create a Diffie Helman
+    openssl req -newkey rsa:4096 -x509 -sha256 -days $ssl_days -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername" > /dev/null
+    if [[ $dhparam == true ]]; then
+        openssl dhparam -out $cert_path/dhparam.pem 4096
+    else
+        true
+    fi
+}
+
+nc_autoconfig(){
+cat << EOF > $root_dir/config/autoconfig.php
+<?php
+\$AUTOCONFIG = array(
+"dbtype"        => "mysql",
+"dbname"        => "$db_name",
+"dbuser"        => "$db_user",
+"dbpass"        => "$db_pass",
+"dbhost"        => "localhost",
+"dbtableprefix" => "",
+"adminlogin"    => "$nc_user",
+"adminpass"     => "$nc_pass",
+"directory"     => "$root_dir/data",
+);
+EOF
+}
+
+optional_optimization(){
+    sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'""," $root_dir/config/config.php
+    sed -i 's/\\/\\\\/g' $root_dir/config/config.php
+
+    echo "Enjoy your new Nextcloud at https://$servername!"
+}
+
 selinux_config(){
     semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/config(/.*)?"
     semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/apps(/.*)?"
@@ -332,37 +392,15 @@ echo "Enabling Services"
 systemctl enable --now $webserver mariadb > /dev/null 2>&1
 
 # Create a database with a user, grant privileges
-mysql -e "CREATE DATABASE ${db_name};"
-mysql -e "CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';"
-mysql -e "GRANT ALL ON ${db_name}.* TO '${db_user}'@'localhost';"
-mysql -e "FLUSH PRIVILEGES;"
+mysql_setup
 
 # Generate Self Signed Certs, Uncomment to create a Diffie Helman
-openssl req -newkey rsa:4096 -x509 -sha256 -days $ssl_days -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername"
-if [[ $dhparam == true ]]; then
-    openssl dhparam -out $cert_path/dhparam.pem 4096
-else
-    true
-fi
+ssl_create
 
 $webserver\_setup
 
 # Autoconfig for Nextcloud
-
-cat << EOF > $root_dir/config/autoconfig.php
-<?php
-\$AUTOCONFIG = array(
-  "dbtype"        => "mysql",
-  "dbname"        => "$db_name",
-  "dbuser"        => "$db_user",
-  "dbpass"        => "$db_pass",
-  "dbhost"        => "localhost",
-  "dbtableprefix" => "",
-  "adminlogin"    => "$nc_user",
-  "adminpass"     => "$nc_pass",
-  "directory"     => "$root_dir/data",
-);
-EOF
+nc_autoconfig
 
 echo "Finish installing nexctloud at https://$servername"
 echo "You will either select to install recommended apps or skip for most minimal setup"
@@ -377,9 +415,8 @@ read -p "Setup Memcache and fix Default Phone Region Error (Y/n)"
 if [[ $REPLY =~ ^[Nn]$ ]]; then
     echo "Enjoy your new Nextcloud at https://$servername!"
     exit
+else
+    optional_optimization
 fi
-
-sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'""," $root_dir/config/config.php
-sed -i 's/\\/\\\\/g' $root_dir/config/config.php
 
 echo "Enjoy your new Nextcloud at https://$servername!"
