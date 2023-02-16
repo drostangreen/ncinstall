@@ -25,9 +25,9 @@ set -e
 Help(){
     echo "Setups up Nextcloud"
     echo
-    echo "Default options: Installs with nginx and ssl validity days of 3650"
+    echo "Default options: ssl validity days of 3650"
     echo "options:"
-    echo "-a    sets apache2 as the web server"
+    echo "-a    sets apache as the web server"
     echo "-n    sets nginx as the web server"
     echo "-d    create Diffie-Hellman Parameter key *WARNING* this can take a long time"
     echo "-s    set the days for ssl validity"
@@ -35,7 +35,7 @@ Help(){
     echo
     echo '######################################################'
     echo "long options:"
-    echo "--apache | --apache2  sets apache2 as the web server"
+    echo "--apache              sets apache2 as the web server"
     echo "--nginx               sets nginx as the web server"
     echo "--dhparam-file        create Diffie-Hellman Parameter key"
     echo "--ssl-valid-days      set the days for ssl validity"
@@ -406,7 +406,7 @@ fi
 
 while [ "$1" != "" ]; do
     case $1 in
-    -a | --apache | --apache2)
+    -a | --apache)
         webserver=$apache
         webserver_setup=apache_setup
         root_dir=/var/www/html/nextcloud
@@ -443,7 +443,7 @@ while [ "$1" != "" ]; do
         ssl_days=$1
         ;;
     
-    *)
+    * | -na | -an)
         echo Invalid option
         Help
         exit 1
