@@ -20,6 +20,7 @@ web_user=www-data
 db_name=nextclouddb
 db_user=dbadmin
 db_pass=password
+db_root_pass=password
 
 # Nextcloud
 nc_user=ncadmin
@@ -94,7 +95,7 @@ ssl_create(){
 mysql_setup(){
 mysql -sfu root <<EOS
 -- set root password
-UPDATE mysql.user SET Password=PASSWORD('password') WHERE User='root';
+UPDATE mysql.user SET Password=PASSWORD('$db_root_pass') WHERE User='root';
 -- delete anonymous users
 DELETE FROM mysql.user WHERE User='';
 -- delete remote root capabilities
@@ -109,10 +110,12 @@ EOS
 
 
 # Create a database with a user, grant privileges
-mysql -e "CREATE DATABASE ${db_name};"
-mysql -e "CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';"
-mysql -e "GRANT ALL ON ${db_name}.* TO '${db_user}'@'localhost';"
-mysql -e "FLUSH PRIVILEGES;"
+mysql --user=root --password=password <<EOF
+CREATE DATABASE ${db_name};
+CREATE USER '${db_user}'@'localhost' IDENTIFIED BY '${db_pass}';
+GRANT ALL ON ${db_name}.* TO '${db_user}'@'localhost';
+FLUSH PRIVILEGES;
+EOF
 }
 
 nc_autoconfig(){
