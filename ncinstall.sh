@@ -463,7 +463,7 @@ if [[ $ID_LIKE == "debian" ]]; then
     echo "Updating repos"; apt update > /dev/null 2>&1
     echo "Installing Prereqs for PHP"; apt install -y ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null 2>&1
 elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
-    echo "Installing Prereqs for PHP"; dnf install -y  epel-release yum-utils unzip curl wget bash-completion policycoreutils-python-utils mlocate bzip2 > /dev/null 2>&1
+    echo "Installing Prereqs for PHP"; dnf install -y  acl yum-utils unzip curl wget bash-completion policycoreutils-python-utils mlocate bzip2 > /dev/null 2>&1
 else
     echo "Unsupported Distro"
     echo "Must be Debian or RedHat based distro"

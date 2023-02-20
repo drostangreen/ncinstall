@@ -376,7 +376,7 @@ if [ "$EUID" -ne 0 ]
   exit 1
 fi
 
-echo "Installing Prereqs for PHP"; dnf install -y redhat-lsb-core epel-release yum-utils unzip curl wget bash-completion policycoreutils-python-utils mlocate bzip2 > /dev/null 2>&1
+echo "Installing Prereqs for PHP"; dnf install -y acl yum-utils unzip curl wget bash-completion policycoreutils-python-utils mlocate bzip2 > /dev/null 2>&1
 
 if [[ $ID == "rocky" ]] || [[ $ID == "centos" ]] || [[ $ID == "rhel" ]] || [[ $ID == "almalinux" ]]; then
   redhat_repo
@@ -385,7 +385,7 @@ elif [[ $ID == "fedora" ]]; then
 fi
 
 echo "Setting PHP to version $version"; dnf module enable php:remi-$version -y > /dev/null 2>&1
-echo "Installing Base"; dnf install -y $webserver mariadb-server wget unzip php php-{bcmath,bz2,intl,gd,mbstring,mysql,zip,xml,curl,cli,mbstring,imagick,gmp,apcu,posix}  > /dev/null 2>&1
+echo "Installing Base"; dnf install -y $webserver mariadb-server wget unzip php php-{bcmath,bz2,intl,gd,mbstring,mysql,zip,xml,curl,cli,mbstring,imagick,gmp,apcu,posix,ldap,smbclient}  > /dev/null 2>&1
 
 
 echo "Enabling Services"
