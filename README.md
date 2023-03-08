@@ -15,7 +15,10 @@ Profit
 - Debian 10 (tested)
 - Ubuntu 22.04 LTS (tested)
 - Ubuntu 20.04 LST (tested)
+- Rocky 8 (tested)
+- Centos 8 (tested)
+- Fedora 37 (tested)
 
-Only setup for Debian Based Distros
 PHP 8.1 is current recommendation from Nextcloud
-Considering adding Redhat support (undecided)
+Totally not RHEL 9 has not been tested yet but will likely work
+May add FreeBSD mostly because I like FreeBSD (undecided)
