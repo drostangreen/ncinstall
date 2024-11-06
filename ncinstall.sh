@@ -3,7 +3,7 @@
 . /etc/os-release
 
 # PHP Version
-version=8.1
+version=8.3
 
 # Webserver Vars
 timezone=America/Chicago
