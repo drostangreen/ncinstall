@@ -72,7 +72,7 @@ fedora_repo(){
 
 base_php(){
     $add_repo
-    if [[ $ID_LIKE == "debian" ]]; then
+    if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
         echo "Installing Base"; apt install -y $webserver ${base_packages[*]} > /dev/null 2>&1
         apt install -y php$version > /dev/null 2>&1
     elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
@@ -349,7 +349,7 @@ sed -i.bak '/env\[/s/^;//g' $fpm_path/www.conf
 sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' $fpm_path/www.conf
 
 
-if [[ $ID_LIKE == "debian" ]]; then
+if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
 #enable apache virtual host if debian based
 echo "Disable default site"; a2dissite 000-default.conf > /dev/null
 echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
@@ -364,7 +364,7 @@ systemctl enable --now $fpm_package > /dev/null
 systemctl restart $apache $fpm_package > /dev/null
 }
 
-if [[ $ID_LIKE == "debian" ]]; then
+if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
     apache=apache2
     php_sock_path=/var/run/php/php$version-fpm.sock
     base_packages=(mariadb-server wget unzip libmagickcore-6.q16-6-extra php$version-{ctype,curl,dom,fileinfo,fpm,gd,mbstring,posix,simplexml,xmlreader,xmlwriter,zip,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
@@ -413,7 +413,7 @@ while [ "$1" != "" ]; do
         if [[ $ID_LIKE == "rhel centos fedora" ]]; then
             web_user=apache
             webserver_log_dir=/var/log/httpd
-        elif [[ $ID_LIKE == "debian" ]]; then
+        elif [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
             webserver_log_dir=/var/log/apache2
         fi
         ;;
@@ -424,7 +424,7 @@ while [ "$1" != "" ]; do
         if [[ $ID_LIKE == "rhel centos fedora" ]]; then
             web_user=nginx
             root_dir=/usr/share/nginx/html/nextcloud
-        elif [[ $ID_LIKE == "debian" ]]; then
+        elif [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
             root_dir=/var/www/html/nextcloud
         fi
         ;;
@@ -459,7 +459,7 @@ if [ "$EUID" -ne 0 ]
   exit 1
 fi
 
-if [[ $ID_LIKE == "debian" ]]; then
+if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
     echo "Updating repos"; apt update > /dev/null 2>&1
     echo "Installing Prereqs for PHP"; apt install -y ca-certificates apt-transport-https software-properties-common gnupg2 > /dev/null 2>&1
 elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
