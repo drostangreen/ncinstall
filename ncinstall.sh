@@ -376,7 +376,7 @@ if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
     key_path=/etc/ssl/private
     cert_path=/etc/ssl/certs
     if [[ $ID == debian ]]; then
-        add_repo=debian_repo
+        add_repo=deb_repo
     elif [[ $ID == ubuntu ]] && [[ "${VERSION_ID%%.*}" -lt 22 ]]; then
         add_repo=focal_repo
     elif [[ $ID == ubuntu ]] && [[ "${VERSION_ID%%.*}" -ge 22 ]]; then
