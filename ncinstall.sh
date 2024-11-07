@@ -177,6 +177,8 @@ selinux_config(){
 
 nginx_setup(){
 
+sed -i.bak 's/\bjs\b/& mjs/' /etc/nginx/mime.types
+
 cat << EOF > /etc/nginx/conf.d/nextcloud.conf
 upstream php-handler {
     server unix:$php_sock_path;
@@ -256,7 +258,7 @@ server {
         fastcgi_request_buffering off;
         fastcgi_max_temp_file_size 0;
     }
-    location ~ \.(?:css|js|svg|gif|png|jpg|ico|wasm|tflite|map)$ {
+    location ~ \.(?:css|js|mjs|svg|gif|png|jpg|ico|wasm|tflite|map)$ {
         try_files \$uri /index.php\$request_uri;
         add_header Cache-Control "public, max-age=15778463, \$asset_immutable";
         access_log off;     # Optional: Don't log access to assets
