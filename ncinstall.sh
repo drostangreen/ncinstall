@@ -110,8 +110,11 @@ ssl_create(){
 }
 
 optional_optimization(){
-    sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'""," $root_dir/config/config.php
+    sed -i.bak  "$ i\ \ 'default_phone_region' => 'US',\n\ \ 'maintenance_window_start' => ""6"",\n\ \ 'memcache.local' => ""'\\\\OC\\\\Memcache\\\\APCu'"",\n\ \ 'memcache.distributed' => ""'\\\\OC\\\\Memcache\\\\Redis'"",\n\ \ 'memcache.locking' => ""'\\\\OC\\\\Memcache\\\\Redis'""," $root_dir/config/config.php
+    sed -i.bak  "$ i\ \ 'redis' => [\n\t 'host' => ""'localhost'"",\n\t 'port' => ""6379"",\n]""," $root_dir/config/config.php
     sed -i 's/\\/\\\\/g' $root_dir/config/config.php
+
+    systemctl enable --now redis-server
 
     echo "Enjoy your new Nextcloud at https://$servername!"
 }
@@ -367,7 +370,7 @@ systemctl restart $apache $fpm_package > /dev/null
 if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
     apache=apache2
     php_sock_path=/var/run/php/php$version-fpm.sock
-    base_packages=(mariadb-server wget unzip libmagickcore-6.q16-6-extra php$version-{ctype,curl,dom,fileinfo,fpm,gd,mbstring,posix,simplexml,xmlreader,xmlwriter,zip,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
+    base_packages=(mariadb-server redis redis-server wget unzip libmagickcore-6.q16-6-extra php$version-{ctype,curl,dom,fileinfo,fpm,gd,mbstring,memcached,posix,redis,simplexml,xmlreader,xmlwriter,zip,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
     apache_site_dir=/etc/apache2/sites-available
     web_user=www-data
     php_path=/etc/php/$version/fpm
@@ -495,7 +498,7 @@ pause "Press [ENTER] to continue..."
 
 # Default Yes to question
 
-read -p "Setup Memcache and fix Default Phone Region Error (Y/n)"
+read -p "Setup Memcache/Redis and fix Default Phone Region Error (Y/n)"
 if [[ $REPLY =~ ^[Nn]$ ]]; then
     echo "Enjoy your new Nextcloud at https://$servername!"
     exit
