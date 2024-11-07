@@ -51,6 +51,10 @@ function pause(){
     read -p "$*"
 }
 
+cron_setup(){
+	(crontab -u www-data -l; echo "*/5 * * * * php -f $root_dir/cron.php") | awk '!x[$0]++' | crontab -u www-data -
+}
+
 deb_repo(){
     echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $VERSION_CODENAME main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
     echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
@@ -487,6 +491,8 @@ nextcloud_install
 ssl_create
 
 $webserver_setup
+
+cron_setup
 
 # Autoconfig for Nextcloud
 nc_autoconfig
