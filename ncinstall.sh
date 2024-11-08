@@ -19,6 +19,7 @@ db_root_pass=password
 # Nextcloud
 nc_user=ncadmin
 nc_pass=password
+log_dir=/var/log/nextcloud
 
 set -e
 
@@ -111,6 +112,48 @@ ssl_create(){
     else
         true
     fi
+}
+
+fail2ban_setup(){
+    if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
+        echo "Installing Fail2ban"; apt install -y fail2ban > /dev/null 2>&1
+    elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
+        echo "Installing Fail2ban"; dnf install -y fail2ban > /dev/null 2>&1
+
+    fi
+
+    # Create Filter
+    cat << EOF > /etc/fail2ban/filter.d/nextcloud.conf
+    [Definition]
+    _groupsre = (?:(?:,?\s*"\w+":(?:"[^"]+"|\w+))*)
+    failregex = ^\{%(_groupsre)s,?\s*"remoteAddr":"<HOST>"%(_groupsre)s,?\s*"message":"Login failed:
+                ^\{%(_groupsre)s,?\s*"remoteAddr":"<HOST>"%(_groupsre)s,?\s*"message":"Trusted domain error.
+    datepattern = ,?\s*"time"\s*:\s*"%%Y-%%m-%%d[T ]%%H:%%M:%%S(%%z)?"
+    EOF
+
+    # Create Jail
+    cat << EOF > /etc/fail2ban/jail.d/nextcloud.local
+    [nextcloud]
+    backend = auto
+    enabled = true
+    port = 80,443
+    protocol = tcp
+    filter = nextcloud
+    maxretry = 3
+    bantime = 86400
+    findtime = 43200
+    logpath = $log_dir/nextcloud.log
+    EOF
+
+    # Add logging
+    sed -i.bak  "$ i\ \ 'logfile' => '$log_dir/nextcloud.log',\n\ \ 'loglevel' => 2," $root_dir/config/config.php
+
+    if [[ $ID == "debian" ]]; then
+        echo "sshd_backend = systemd" >> /etc/fail2ban/paths-debian.conf > /dev/null 2>&1
+    fi
+
+    systemctl enable --now fail2ban > /dev/null 2>&1
+    echo "Fail2van installed and configured"
 }
 
 optional_optimization(){
