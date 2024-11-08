@@ -419,7 +419,7 @@ EOF
 if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
     apache=apache2
     php_sock_path=/var/run/php/php$version-fpm.sock
-    base_packages=(mariadb-server redis redis-server wget unzip libmagickcore-6.q16-6-extra php$version-{ctype,curl,dom,fileinfo,fpm,gd,mbstring,memcached,posix,redis,simplexml,xmlreader,xmlwriter,zip,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
+    base_packages=(mariadb-server cron redis redis-server wget unzip libmagickcore-6.q16-6-extra php$version-{ctype,curl,dom,fileinfo,fpm,gd,mbstring,memcached,posix,redis,simplexml,xmlreader,xmlwriter,zip,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
     apache_site_dir=/etc/apache2/sites-available
     web_user=www-data
     php_path=/etc/php/$version/fpm
@@ -437,7 +437,7 @@ if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
 elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
     apache=httpd
     php_sock_path=/run/php-fpm/www.sock
-    base_packages=(mariadb-server wget unzip php php-{ctype,curl,dom,fileinfo,gd,json,libxml,mbstring,openssl,posix,session,simplexml,xmlreader,xmlwriter,zip,zlib,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
+    base_packages=(mariadb-server redis cron wget unzip php php-{ctype,curl,dom,fileinfo,gd,json,libxml,mbstring,openssl,posix,session,simplexml,xmlreader,xmlwriter,zip,zlib,mysql,bz2,intl,ldap,smbclient,bcmath,gmp,exif,apcu,imagick,cli})
     apache_site_dir=/etc/httpd/conf.d
     php_path=/etc
     fpm_path=/etc/php-fpm.d
