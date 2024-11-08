@@ -53,7 +53,14 @@ function pause(){
 }
 
 cron_setup(){
-	(crontab -u www-data -l; echo "*/5 * * * * php -f $root_dir/cron.php") | awk '!x[$0]++' | crontab -u www-data -
+crontabs_dir=/var/spool/cron/crontabs
+
+cat << EOF > $crontabs_dir/$web_user
+*/5 * * * * php -f $root_dir/cron.php
+EOF	
+
+chown $web_user:crontab $crontabs_dir/$web_user
+chmod 600 $crontabs_dir/$web_user
 }
 
 deb_repo(){
