@@ -99,7 +99,7 @@ php_config(){
     # configure php ini file, set normal params then setup for memcache
 
     echo "Backup php.ini file then modify"; sed -i.bak "s|^memory_limit = .*|memory_limit = 512M|;s|^upload_max_filesize = .*|upload_max_filesize = 500M|;s|^post_max_size = .*|post_max_size = 500M|;s|^max_execution_time = .*|max_execution_time = 300|;s|\;date.timezone =|date.timezone = $timezone|" $php_path/php.ini
-    sed -i "s/^;opcache\.enable=.*/opcache\.enable=1/;s/^;opcache\.interned_strings_buffer=.*/opcache\.interned_strings_buffer=10/;s/^;opcache\.max_accelerated_files=.*/opcache\.max_accelerated_files=10000/;s/^;opcache\.memory_consumption=.*/opcache.memory_consumption=128/;s/^;opcache\.save_comments=.*/opcache.save_comments=1/;s/^;opcache\.revalidate_freq=.*/opcache.revalidate_freq=1/;s|^;open_basedir.*|open_basedir = $root_dir:/dev/urandom:/tmp|" $php_path/php.ini
+    sed -i "s/^;opcache\.enable=.*/opcache\.enable=1/;s/^;opcache\.interned_strings_buffer=.*/opcache\.interned_strings_buffer=10/;s/^;opcache\.max_accelerated_files=.*/opcache\.max_accelerated_files=10000/;s/^;opcache\.memory_consumption=.*/opcache.memory_consumption=128/;s/^;opcache\.save_comments=.*/opcache.save_comments=1/;s/^;opcache\.revalidate_freq=.*/opcache.revalidate_freq=1/;s|^;open_basedir.*|open_basedir = $root_dir:$log_dir:/dev/urandom:/tmp|" $php_path/php.ini
 }
 
 nextcloud_install(){
@@ -153,7 +153,15 @@ logpath = $log_dir/nextcloud.log
 EOF
 
     # Add logging
-    sed -i.bak  "$ i\ \ 'logfile' => '$log_dir/nextcloud.log',\n\ \ 'loglevel' => 2," $root_dir/config/config.php
+    echo "Setup logging"; sed -i.bak  "$ i\ \ 'logfile' => '$log_dir/nextcloud.log',\n\ \ 'loglevel' => 2," $root_dir/config/config.php
+
+	if [ -d $log_dir ]; then
+		echo "$log_dir already exists"
+	else
+		echo "Create $log_dir"
+		mkdir $log_dir
+		chown www-data:www-data $log_dir
+	fi
 
     if [[ $ID == "debian" ]]; then
         echo "sshd_backend = systemd" >> /etc/fail2ban/paths-debian.conf > /dev/null 2>&1
