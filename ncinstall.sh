@@ -167,7 +167,7 @@ optional_optimization(){
 }
 
 mysql_setup(){
-mysql -sfu root <<EOS
+mysql -sfu root <<EOF
 -- set root password
 UPDATE mysql.user SET Password=PASSWORD('$db_root_pass') WHERE User='root';
 -- delete anonymous users
@@ -180,7 +180,7 @@ DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 -- make changes immediately
 FLUSH PRIVILEGES;
-EOS
+EOF
 
 
 # Create a database with a user, grant privileges
