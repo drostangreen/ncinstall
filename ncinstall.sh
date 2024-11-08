@@ -123,27 +123,27 @@ fail2ban_setup(){
     fi
 
     # Create Filter
-    cat << EOF > /etc/fail2ban/filter.d/nextcloud.conf
-    [Definition]
-    _groupsre = (?:(?:,?\s*"\w+":(?:"[^"]+"|\w+))*)
-    failregex = ^\{%(_groupsre)s,?\s*"remoteAddr":"<HOST>"%(_groupsre)s,?\s*"message":"Login failed:
-                ^\{%(_groupsre)s,?\s*"remoteAddr":"<HOST>"%(_groupsre)s,?\s*"message":"Trusted domain error.
-    datepattern = ,?\s*"time"\s*:\s*"%%Y-%%m-%%d[T ]%%H:%%M:%%S(%%z)?"
-    EOF
+cat << EOF > /etc/fail2ban/filter.d/nextcloud.conf
+[Definition]
+_groupsre = (?:(?:,?\s*"\w+":(?:"[^"]+"|\w+))*)
+failregex = ^\{%(_groupsre)s,?\s*"remoteAddr":"<HOST>"%(_groupsre)s,?\s*"message":"Login failed:
+            ^\{%(_groupsre)s,?\s*"remoteAddr":"<HOST>"%(_groupsre)s,?\s*"message":"Trusted domain error.
+datepattern = ,?\s*"time"\s*:\s*"%%Y-%%m-%%d[T ]%%H:%%M:%%S(%%z)?"
+EOF
 
-    # Create Jail
-    cat << EOF > /etc/fail2ban/jail.d/nextcloud.local
-    [nextcloud]
-    backend = auto
-    enabled = true
-    port = 80,443
-    protocol = tcp
-    filter = nextcloud
-    maxretry = 3
-    bantime = 86400
-    findtime = 43200
-    logpath = $log_dir/nextcloud.log
-    EOF
+# Create Jail
+cat << EOF > /etc/fail2ban/jail.d/nextcloud.local
+[nextcloud]
+backend = auto
+enabled = true
+port = 80,443
+protocol = tcp
+filter = nextcloud
+maxretry = 3
+bantime = 86400
+findtime = 43200
+logpath = $log_dir/nextcloud.log
+EOF
 
     # Add logging
     sed -i.bak  "$ i\ \ 'logfile' => '$log_dir/nextcloud.log',\n\ \ 'loglevel' => 2," $root_dir/config/config.php
@@ -224,7 +224,7 @@ selinux_config(){
 
 nginx_setup(){
 
-sed -i.bak 's/\bjs\b/& mjs/' /etc/nginx/mime.types
+    sed -i.bak 's/\bjs\b/& mjs/' /etc/nginx/mime.types
 
 cat << EOF > /etc/nginx/conf.d/nextcloud.conf
 upstream php-handler {
@@ -327,36 +327,36 @@ server {
 }
 EOF
 
-if [ -f $cert_path/dhparam.pem ];
-then
-    sed -i '/ssl_dhparam.*/s/#//g' /etc/nginx/conf.d/nextcloud.conf
-fi 
+    if [ -f $cert_path/dhparam.pem ];
+    then
+        sed -i '/ssl_dhparam.*/s/#//g' /etc/nginx/conf.d/nextcloud.conf
+    fi 
 
-php_config
-sed -i.bak '/env\[/s/^;//g' $fpm_path/www.conf
-sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' $fpm_path/www.conf
+    php_config
+    sed -i.bak '/env\[/s/^;//g' $fpm_path/www.conf
+    sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' $fpm_path/www.conf
 
-if [[ $ID_LIKE == "rhel centos fedora" ]]; then
-    sed -i "s/user =.*/user = $web_user/;s/group =.*/group = $web_user/" $fpm_path/www.conf
-    
-    chgrp -R nginx /var/lib/php/{opcache,session,wsdlcache}
-    semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/data(/.*)?"
-    selinux_config
-    chcon -t httpd_sys_rw_content_t $root_dir -R
-    setfacl -R -m u:nginx:rwx /var/lib/php/opcache/
-    setfacl -R -m u:nginx:rwx /var/lib/php/session/
-    setfacl -R -m u:nginx:rwx /var/lib/php/wsdlcache
-fi
+    if [[ $ID_LIKE == "rhel centos fedora" ]]; then
+        sed -i "s/user =.*/user = $web_user/;s/group =.*/group = $web_user/" $fpm_path/www.conf
+        
+        chgrp -R nginx /var/lib/php/{opcache,session,wsdlcache}
+        semanage fcontext -a -t httpd_sys_rw_content_t "$root_dir/data(/.*)?"
+        selinux_config
+        chcon -t httpd_sys_rw_content_t $root_dir -R
+        setfacl -R -m u:nginx:rwx /var/lib/php/opcache/
+        setfacl -R -m u:nginx:rwx /var/lib/php/session/
+        setfacl -R -m u:nginx:rwx /var/lib/php/wsdlcache
+    fi
 
-#enable nginx virtual host
-systemctl enable --now $fpm_package > /dev/null
-systemctl restart nginx $fpm_package > /dev/null
+    #enable nginx virtual host
+    systemctl enable --now $fpm_package > /dev/null
+    systemctl restart nginx $fpm_package > /dev/null
 }
 
 apache_setup(){
-if [[ $ID_LIKE == "rhel centos fedora" ]]; then
-    dnf install -y mod_ssl > /dev/null 2>&1
-fi
+    if [[ $ID_LIKE == "rhel centos fedora" ]]; then
+        dnf install -y mod_ssl > /dev/null 2>&1
+    fi
 
 cat << EOF > $apache_site_dir/nextcloud.conf
 <VirtualHost *:80>
@@ -396,24 +396,24 @@ cat << EOF > $apache_site_dir/nextcloud.conf
 </VirtualHost>
 EOF
 
-php_config
-sed -i.bak '/env\[/s/^;//g' $fpm_path/www.conf
-sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' $fpm_path/www.conf
+    php_config
+    sed -i.bak '/env\[/s/^;//g' $fpm_path/www.conf
+    sed -i 's/pm\.max_children =.*/pm\.max_children = 120/;s/pm\.start_servers =.*/pm\.start_servers = 12/;s/pm\.min_spare_servers =.*/pm\.min_spare_servers = 6/;s/pm\.max_spare_servers =.*/pm\.max_spare_servers = 18/' $fpm_path/www.conf
 
 
-if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
-#enable apache virtual host if debian based
-echo "Disable default site"; a2dissite 000-default.conf > /dev/null
-echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
-a2enmod rewrite headers env dir mime ssl mpm_event proxy_fcgi setenvif > /dev/null
-a2enconf php$version-fpm > /dev/null
-phpenmod bcmath gmp imagick intl > /dev/null
-elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
-selinux_config
-fi
+    if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
+        #enable apache virtual host if debian based
+        echo "Disable default site"; a2dissite 000-default.conf > /dev/null
+        echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
+        a2enmod rewrite headers env dir mime ssl mpm_event proxy_fcgi setenvif > /dev/null
+        a2enconf php$version-fpm > /dev/null
+        phpenmod bcmath gmp imagick intl > /dev/null
+    elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
+        selinux_config
+    fi
 
-systemctl enable --now $fpm_package > /dev/null
-systemctl restart $apache $fpm_package > /dev/null
+    systemctl enable --now $fpm_package > /dev/null
+    systemctl restart $apache $fpm_package > /dev/null
 }
 
 if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
