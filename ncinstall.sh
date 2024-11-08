@@ -55,9 +55,7 @@ function pause(){
 cron_setup(){
 crontabs_dir=/var/spool/cron/crontabs
 
-cat << EOF > $crontabs_dir/$web_user
-*/5 * * * * php -f $root_dir/cron.php
-EOF	
+echo "*/5 * * * * php -f $root_dir/cron.php" > $crontabs_dir/$web_user
 
 chown $web_user:crontab $crontabs_dir/$web_user
 chmod 600 $crontabs_dir/$web_user
