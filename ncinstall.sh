@@ -551,8 +551,16 @@ pause "Press [ENTER] to continue..."
 
 read -p "Setup Memcache/Redis and fix Default Phone Region Error (Y/n)"
 if [[ $REPLY =~ ^[Nn]$ ]]; then
+    echo "No to caching selected"
+else
+    optional_optimization
+fi
+
+read -p "Setup fail2ban (Y/n)"
+if [[ $REPLY =~ ^[Nn]$ ]]; then
     echo "Enjoy your new Nextcloud at https://$servername!"
     exit
 else
-    optional_optimization
+    fail2ban_setup
+    echo "Enjoy your new Nextcloud at https://$servername!"
 fi
