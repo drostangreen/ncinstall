@@ -62,13 +62,13 @@ chmod 600 $crontabs_dir/$web_user
 }
 
 deb_repo(){
-    echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $VERSION_CODENAME main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 
-    echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null
-    echo "Updating repos"; apt update 
+    echo "Adding Sury repo"; echo "deb https://packages.sury.org/php/ $VERSION_CODENAME main" |  tee /etc/apt/sources.list.d/sury-php.list > /dev/null 2>&1
+    echo "Adding GPG key for Sury repo"; curl -fsSL  https://packages.sury.org/php/apt.gpg|  gpg --dearmor -o /etc/apt/trusted.gpg.d/sury-keyring.gpg > /dev/null 2>&1
+    echo "Updating repos"; apt update > /dev/null 2>&1
 }
 
 focal_repo(){
-    echo "adding ondrej/php repo"; add-apt-repository -y ppa:ondrej/php > /dev/null
+    echo "adding ondrej/php repo"; add-apt-repository -y ppa:ondrej/php > /dev/null 2>&1
     echo "Updating repos"; apt update > /dev/null 2>&1
 }
 
@@ -90,7 +90,7 @@ base_php(){
         echo "Installing Base"; dnf install -y $webserver ${base_packages[*]} > /dev/null 2>&1
     fi
     echo "Enabling Services"
-    systemctl enable --now $webserver mariadb > /dev/null
+    systemctl enable --now $webserver mariadb > /dev/null 2>&1
 }
 
 php_config(){
@@ -102,7 +102,7 @@ php_config(){
 
 nextcloud_install(){
     echo "Installing Nextcloud"; wget -q https://download.nextcloud.com/server/releases/latest.zip
-    echo "Unzipping"; unzip latest.zip > /dev/null && rm latest.zip
+    echo "Unzipping"; unzip latest.zip > /dev/null 2>&1 && rm latest.zip
     mv nextcloud $root_dir
     mkdir $root_dir/data
     chown -R $web_user:$web_user $root_dir
@@ -111,9 +111,9 @@ nextcloud_install(){
 
 ssl_create(){
     # Generate Self Signed Certs, Uncomment to create a Diffie Helman
-    openssl req -newkey rsa:4096 -x509 -sha256 -days $ssl_days -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername" > /dev/null
+    openssl req -newkey rsa:4096 -x509 -sha256 -days $ssl_days -nodes -out $cert_path/nextcloudcrt.pem -keyout $key_path/nextcloud.key -subj "/C=US/ST=/L=/O=/OU=/CN=$servername" > /dev/null 2>&1
     if [[ $dhparam == true ]]; then
-        openssl dhparam -out $cert_path/dhparam.pem 4096
+        openssl dhparam -out $cert_path/dhparam.pem 4096 > /dev/null 2>&1
     else
         true
     fi
@@ -157,8 +157,8 @@ EOF
 		echo "$log_dir already exists"
 	else
 		echo "Create $log_dir"
-		mkdir $log_dir
-		chown www-data:www-data $log_dir
+		mkdir $log_dir > /dev/null 2>&1
+		chown www-data:www-data $log_dir > /dev/null 2>&1
 	fi
 
     if [[ $ID == "debian" ]]; then
@@ -166,7 +166,7 @@ EOF
     fi
 
     systemctl enable --now fail2ban > /dev/null 2>&1
-    echo "Fail2van installed and configured"
+    echo "Fail2ban installed and configured"
 }
 
 optional_optimization(){
@@ -174,7 +174,7 @@ optional_optimization(){
     sed -i.bak  "$ i\ \ 'redis' => [\n\t 'host' => ""'localhost'"",\n\t 'port' => ""6379"",\n]""," $root_dir/config/config.php
     sed -i 's/\\/\\\\/g' $root_dir/config/config.php
 
-    systemctl enable --now redis-server
+    systemctl enable --now redis-server > /dev/null 2>&1
 
     echo "Enjoy your new Nextcloud at https://$servername!"
 }
@@ -362,8 +362,8 @@ EOF
     fi
 
     #enable nginx virtual host
-    systemctl enable --now $fpm_package > /dev/null
-    systemctl restart nginx $fpm_package > /dev/null
+    systemctl enable --now $fpm_package > /dev/null 2>&1
+    systemctl restart nginx $fpm_package > /dev/null 2>&1
 }
 
 apache_setup(){
@@ -416,17 +416,17 @@ EOF
 
     if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]]; then
         #enable apache virtual host if debian based
-        echo "Disable default site"; a2dissite 000-default.conf > /dev/null
-        echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null
-        a2enmod rewrite headers env dir mime ssl mpm_event proxy_fcgi setenvif > /dev/null
-        a2enconf php$version-fpm > /dev/null
-        phpenmod bcmath gmp imagick intl > /dev/null
+        echo "Disable default site"; a2dissite 000-default.conf > /dev/null 2>&1
+        echo "Enable nextcloud.conf"; a2ensite nextcloud.conf > /dev/null 2>&1
+        a2enmod rewrite headers env dir mime ssl mpm_event proxy_fcgi setenvif > /dev/null 2>&1
+        a2enconf php$version-fpm > /dev/null 2>&1
+        phpenmod bcmath gmp imagick intl > /dev/null 2>&1
     elif [[ $ID_LIKE == "rhel centos fedora" ]]; then
         selinux_config
     fi
 
-    systemctl enable --now $fpm_package > /dev/null
-    systemctl restart $apache $fpm_package > /dev/null
+    systemctl enable --now $fpm_package > /dev/null 2>&1
+    systemctl restart $apache $fpm_package > /dev/null 2>&1
 }
 
 if [[ $ID_LIKE == "debian" ]] || [[ $ID == "debian" ]];  then
