@@ -55,7 +55,7 @@ function pause(){
 cron_setup(){
 crontabs_dir=/var/spool/cron/crontabs
 
-echo "*/5 * * * * php -f $root_dir/cron.php" > $crontabs_dir/$web_user
+echo "*/5 * * * * php --define apc.enable_cli=1 -f $root_dir/cron.php" > $crontabs_dir/$web_user
 
 chown $web_user:crontab $crontabs_dir/$web_user
 chmod 600 $crontabs_dir/$web_user
